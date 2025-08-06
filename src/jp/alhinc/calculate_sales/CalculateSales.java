@@ -68,6 +68,17 @@ public class CalculateSales {
 			// 一行ずつ読み込む
 			while((line = br.readLine()) != null) {
 				// ※ここの読み込み処理を変更してください。(処理内容1-2)
+
+				//lineに代入された文字列を分割
+				String[] items = line.split(",");
+
+				//支店コードと支店名を保持
+				branchNames.put(items[0], items[1]);
+
+				//支店コードと売上初期値を保持
+				branchSales.put(items[0], 0L);
+
+
 				System.out.println(line);
 			}
 
