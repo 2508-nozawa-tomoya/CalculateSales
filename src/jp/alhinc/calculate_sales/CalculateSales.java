@@ -1,8 +1,10 @@
 package jp.alhinc.calculate_sales;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,6 +66,7 @@ public class CalculateSales {
 				br = new BufferedReader(fr);
 
 				//一行ずつ読み込み、読み込んだ内容をListに保持
+				//itemsArray<> ={支店コード, 売上金額}
 				String line;
 				List<String> itemsArray = new ArrayList<>();
 				while((line = br.readLine()) != null) {
@@ -165,6 +168,27 @@ public class CalculateSales {
 	private static boolean writeFile(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales) {
 		// ※ここに書き込み処理を作成してください。(処理内容3-1)
 
+		try {
+			File file = new File(path, fileName);
+			FileWriter fw = new FileWriter(file);
+			BufferedWriter bw = new BufferedWriter(fw);
+
+			//拡張forでMapからすべてのkey(支店コード)を取得し、そのkeyをもとに支店名、売上金額を取得する
+			for(String key : branchNames.keySet()) {
+
+				//BufferedWriter writeメソッドがLong型では適応されないため売上金額をString型へ変換
+				String saleAmount = String.valueOf(branchSales.get(key));
+
+				bw.write(key + ",");
+				bw.write(branchNames.get(key) + ",");
+				bw.write(saleAmount);
+				bw.newLine();
+			}
+			bw.close();
+		} catch(IOException e) {
+			System.out.println(UNKNOWN_ERROR);
+			return false;
+		}
 		return true;
 	}
 
