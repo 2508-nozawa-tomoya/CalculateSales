@@ -119,6 +119,15 @@ public class CalculateSales {
 
 		try {
 			File file = new File(path, fileName);
+
+			//ファイルの存在を確認
+			if(!file.exists()) {
+				//支店定義ファイルが存在しない場合、コンソールにエラーメッセージを出力
+				System.out.println(FILE_NOT_EXIST);
+				//処理を終了
+				return false;
+			}
+
 			FileReader fr = new FileReader(file);
 			br = new BufferedReader(fr);
 
@@ -129,6 +138,13 @@ public class CalculateSales {
 
 				//lineに代入された文字列を分割
 				String[] items = line.split(",");
+
+				//支店定義ファイルのフォーマットを確認
+				if((items.length != 2) || (!items[0].matches("^[0-9]{3}"))) {
+					//支店定義ファイルのフォーマットが正しくない場合エラーメッセージをコンソールに表示
+					System.out.println(FILE_INVALID_FORMAT);
+					return false;
+				}
 
 				//支店コードと支店名を保持
 				branchNames.put(items[0], items[1]);
