@@ -4,7 +4,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CalculateSales {
@@ -37,7 +39,58 @@ public class CalculateSales {
 		}
 
 		// ※ここから集計処理を作成してください。(処理内容2-1、2-2)
+		//指定したパスに存在するすべてのファイルの情報をfiles[]に格納
+		File[] files = new File(args[0]).listFiles();
 
+		List<File> rcdFiles = new ArrayList<>();
+
+		//売上ファイルかどうかの判定
+		//filesの要素の数だけファイル名の取得と判定を繰り返す
+		for(int i = 0; i < files.length; i++) {
+			if(files[i].getName().matches("^[0-9]{8}.rcd$")) {
+				//売上ファイルであればListに格納
+				rcdFiles.add(files[i]);
+			}
+		}
+
+
+		for(int i = 0; i < rcdFiles.size(); i++) {
+			//売上ファイルの読み込み
+			BufferedReader br = null;
+
+			try {
+				File file = new File(args[0], rcdFiles.get(i).getName());
+				FileReader fr = new FileReader(file);
+				br = new BufferedReader(fr);
+
+				//一行ずつ読み込み、読み込んだ内容をListに保持
+				String line;
+				List<String> itemsArray = new ArrayList<>();
+				while((line = br.readLine()) != null) {
+					itemsArray.add(line);
+				}
+
+				//long型へ変換
+				long fileSale = Long.parseLong(itemsArray.get(1));
+				//読み込んだ売上金額を加算
+				Long saleAmount = branchSales.get(itemsArray.get(0)) + fileSale;
+
+				//加算した売上金額をMapに追加
+				branchSales.put(itemsArray.get(0), saleAmount);
+
+			} catch(IOException e) {
+				System.out.println(UNKNOWN_ERROR);
+			} finally {
+				if(br != null) {
+					try {
+						// ファイルを閉じる
+						br.close();
+					} catch(IOException e) {
+						System.out.println(UNKNOWN_ERROR);
+					}
+				}
+			}
+		}
 
 
 		// 支店別集計ファイル書き込み処理
