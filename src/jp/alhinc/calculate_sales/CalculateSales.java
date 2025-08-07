@@ -83,6 +83,7 @@ public class CalculateSales {
 
 			} catch(IOException e) {
 				System.out.println(UNKNOWN_ERROR);
+				return;
 			} finally {
 				if(br != null) {
 					try {
@@ -90,6 +91,7 @@ public class CalculateSales {
 						br.close();
 					} catch(IOException e) {
 						System.out.println(UNKNOWN_ERROR);
+						return;
 					}
 				}
 			}
@@ -167,11 +169,11 @@ public class CalculateSales {
 	 */
 	private static boolean writeFile(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales) {
 		// ※ここに書き込み処理を作成してください。(処理内容3-1)
-
+		BufferedWriter bw = null;
 		try {
 			File file = new File(path, fileName);
 			FileWriter fw = new FileWriter(file);
-			BufferedWriter bw = new BufferedWriter(fw);
+			bw = new BufferedWriter(fw);
 
 			//拡張forでMapからすべてのkey(支店コード)を取得し、そのkeyをもとに支店名、売上金額を取得する
 			for(String key : branchNames.keySet()) {
@@ -184,10 +186,18 @@ public class CalculateSales {
 				bw.write(saleAmount);
 				bw.newLine();
 			}
-			bw.close();
 		} catch(IOException e) {
 			System.out.println(UNKNOWN_ERROR);
 			return false;
+		} finally {
+			if(bw != null) {
+				try {
+					bw.close();
+				} catch(IOException e) {
+					System.out.println(UNKNOWN_ERROR);
+					return false;
+				}
+			}
 		}
 		return true;
 	}
