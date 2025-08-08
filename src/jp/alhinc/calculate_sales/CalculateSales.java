@@ -24,7 +24,10 @@ public class CalculateSales {
 	private static final String UNKNOWN_ERROR = "予期せぬエラーが発生しました";
 	private static final String FILE_NOT_EXIST = "支店定義ファイルが存在しません";
 	private static final String FILE_INVALID_FORMAT = "支店定義ファイルのフォーマットが不正です";
-	private static final String FILENAME_NOT_CONSECUTIVE = "売上ファイル名が連番ではありません";
+	private static final String FILENAME_NOT_CONSECUTIVE = "売上ファイル名が連番になっていません";
+	private static final String ARITHMETIC_OVERFLOW = "合計⾦額が10桁を超えました";
+	private static final String BRANCHCODE_NOT_EXIST = "該当ファイル名(00000001.rcdなど)の支店コードが不正です";
+	private static final String SALESFILE_INVALID_FORMAT = "該当ファイル名(00000001.rcdなど)のフォーマットが不正です";
 
 	/**
 	 * メインメソッド
@@ -92,11 +95,32 @@ public class CalculateSales {
 				while((line = br.readLine()) != null) {
 					itemsArray.add(line);
 				}
+				//売上ファイルの中身が2行かどうか
+				if(itemsArray.size() != 2 ) {
+					//売上ファイルが2行でなかったらエラーメッセージ表示
+					System.out.println(SALESFILE_INVALID_FORMAT);
+					return;
+				}
+
+				//売上ファイルの支店コードが支店定義ファイルに存在するか確認
+				if(!branchNames.containsKey(itemsArray.get(0))) {
+					//支店コードが存在しない場合エラーメッセージ表示
+					System.out.println(BRANCHCODE_NOT_EXIST);
+					return;
+				}
 
 				//long型へ変換
 				long fileSale = Long.parseLong(itemsArray.get(1));
 				//読み込んだ売上金額を加算
 				Long saleAmount = branchSales.get(itemsArray.get(0)) + fileSale;
+
+				//売上金額の合計が10桁を超えていないか確認
+				if(saleAmount >= 10000000000L) {
+					//売上金額が11桁以上であればエラーメッセージ表示
+					System.out.println(ARITHMETIC_OVERFLOW);
+					return;
+				}
+
 
 				//加算した売上金額をMapに追加
 				branchSales.put(itemsArray.get(0), saleAmount);
