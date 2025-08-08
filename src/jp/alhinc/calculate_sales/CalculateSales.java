@@ -42,6 +42,7 @@ public class CalculateSales {
 	private static final String FILENAME_NOT_CONSECUTIVE = "売上ファイル名が連番になっていません";
 	private static final String ARITHMETIC_OVERFLOW = "合計⾦額が10桁を超えました";
 	private static final String BRANCHCODE_NOT_EXIST = "該当ファイル名(00000001.rcdなど)の支店コードが不正です";
+	private static final String COMMODITYCODE_NOT_EXIST = "該当ファイル名(00000001.rcdなど)の商品コードが不正です";
 	private static final String SALESFILE_INVALID_FORMAT = "該当ファイル名(00000001.rcdなど)のフォーマットが不正です";
 
 	/**
@@ -122,15 +123,15 @@ public class CalculateSales {
 				br = new BufferedReader(fr);
 
 				//一行ずつ読み込み、読み込んだ内容をListに保持
-				//itemsArray<> ={支店コード, 売上金額}
+				//itemsArray<> ={支店コード,商品コード, 売上金額}
 				String line;
 				List<String> itemsArray = new ArrayList<>();
 				while((line = br.readLine()) != null) {
 					itemsArray.add(line);
 				}
-				//売上ファイルの中身が2行かどうか
-				if(itemsArray.size() != 2 ) {
-					//売上ファイルが2行でなかったらエラーメッセージ表示
+				//売上ファイルの中身が3行かどうか
+				if(itemsArray.size() != 3 ) {
+					//売上ファイルが3行でなかったらエラーメッセージ表示
 					System.out.println(SALESFILE_INVALID_FORMAT);
 					return;
 				}
@@ -142,28 +143,50 @@ public class CalculateSales {
 					return;
 				}
 
+				//売上ファイルの商品コードが商品定義ファイルに存在するか確認
+				if(!commodityNames.containsKey(itemsArray.get(1))) {
+					//商品コードが存在しない場合エラーメッセージ表示
+					System.out.println(COMMODITYCODE_NOT_EXIST);
+					return;
+				}
+
 				//売上ファイルの売上金額が数字なのか確認
-				if(!itemsArray.get(1).matches("^[0-9]*$")) {
+				if(!itemsArray.get(2).matches("^[0-9]*$")) {
 					//売上金額が数字出なかった場合にはエラーメッセージ表示
 					System.out.println(UNKNOWN_ERROR);
 					return;
 				}
 
 				//long型へ変換
-				long fileSale = Long.parseLong(itemsArray.get(1));
-				//読み込んだ売上金額を加算
-				Long saleAmount = branchSales.get(itemsArray.get(0)) + fileSale;
+				long fileSale = Long.parseLong(itemsArray.get(2));
+
+				//支店別に売上金額を集計
+				//読み込んだ売上金額を該当する支店の売上金額に加算
+				Long branchSaleAmount = branchSales.get(itemsArray.get(0)) + fileSale;
 
 				//売上金額の合計が10桁を超えていないか確認
-				if(saleAmount >= 10000000000L) {
+				if(branchSaleAmount >= 10000000000L) {
 					//売上金額が11桁以上であればエラーメッセージ表示
 					System.out.println(ARITHMETIC_OVERFLOW);
 					return;
 				}
 
+				//加算した売上金額を支店ごとの売上を保持するMapに追加
+				branchSales.put(itemsArray.get(0), branchSaleAmount);
 
-				//加算した売上金額をMapに追加
-				branchSales.put(itemsArray.get(0), saleAmount);
+				//商品ごとに売上金額を集計
+				//読み込んだ売上金額を該当する商品の売上金額に加算
+				Long commoditySaleAmount = commoditySales.get(itemsArray.get(1)) + fileSale;
+
+				//売上金額の合計が10桁を超えていないか確認
+				if(commoditySaleAmount >= 10000000000L) {
+					//売上金額が11桁以上であればエラーメッセージ表示
+					System.out.println(ARITHMETIC_OVERFLOW);
+					return;
+				}
+
+				//加算した売上金額を商品ごとの売上を保持するMapに追加
+				commoditySales.put(itemsArray.get(0), commoditySaleAmount);
 
 			} catch(IOException e) {
 				System.out.println(UNKNOWN_ERROR);
@@ -187,6 +210,11 @@ public class CalculateSales {
 			return;
 		}
 
+		//商品別集計ファイル書き込み処理
+		if(!writeFile(args[0], FILE_NAME_COMMODITY_OUT, commodityNames, commoditySales)) {
+			return;
+		}
+
 	}
 
 	/**
@@ -194,8 +222,8 @@ public class CalculateSales {
 	 *
 	 * @param フォルダパス
 	 * @param ファイル名
+	 * @param 支店or商品
 	 * @param 正規表現
-	 * @param エラーメッセージ
 	 * @param 支店コードと支店名を保持するMap
 	 * @param 支店コードと売上金額を保持するMap
 	 * @return 読み込み可否
@@ -260,7 +288,7 @@ public class CalculateSales {
 	}
 
 	/**
-	 * 支店別集計ファイル書き込み処理
+	 * 支店別集計ファイル・商品別集計ファイル書き込み処理
 	 *
 	 * @param フォルダパス
 	 * @param ファイル名
@@ -268,7 +296,7 @@ public class CalculateSales {
 	 * @param 支店コードと売上金額を保持するMap
 	 * @return 書き込み可否
 	 */
-	private static boolean writeFile(String path, String fileName, Map<String, String> branchNames, Map<String, Long> branchSales) {
+	private static boolean writeFile(String path, String fileName, Map<String, String> names, Map<String, Long> sales) {
 		// ※ここに書き込み処理を作成してください。(処理内容3-1)
 		BufferedWriter bw = null;
 		try {
@@ -276,14 +304,14 @@ public class CalculateSales {
 			FileWriter fw = new FileWriter(file);
 			bw = new BufferedWriter(fw);
 
-			//拡張forでMapからすべてのkey(支店コード)を取得し、そのkeyをもとに支店名、売上金額を取得する
-			for(String key : branchNames.keySet()) {
+			//拡張forでMapからすべてのkey(支店コードまたは商品コード)を取得し、そのkeyをもとに支店名または商品名と売上金額を取得する
+			for(String key : names.keySet()) {
 
 				//BufferedWriter writeメソッドがLong型では適応されないため売上金額をString型へ変換
-				String saleAmount = String.valueOf(branchSales.get(key));
+				String saleAmount = String.valueOf(sales.get(key));
 
 				bw.write(key + ",");
-				bw.write(branchNames.get(key) + ",");
+				bw.write(names.get(key) + ",");
 				bw.write(saleAmount);
 				bw.newLine();
 			}
