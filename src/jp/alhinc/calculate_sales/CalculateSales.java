@@ -40,6 +40,13 @@ public class CalculateSales {
 		// 支店コードと売上金額を保持するMap
 		Map<String, Long> branchSales = new HashMap<>();
 
+		//コマンドライン引数が渡されているか確認
+		if(args.length != 1) {
+			//コマンドライン引数が1つ設定されていない場合エラーメッセージ表示
+			System.out.println(UNKNOWN_ERROR);
+			return;
+		}
+
 		// 支店定義ファイル読み込み処理
 		if(!readFile(args[0], FILE_NAME_BRANCH_LST, branchNames, branchSales)) {
 			return;
@@ -54,8 +61,8 @@ public class CalculateSales {
 		//売上ファイルかどうかの判定
 		//filesの要素の数だけファイル名の取得と判定を繰り返す
 		for(int i = 0; i < files.length; i++) {
-			if(files[i].getName().matches("^[0-9]{8}.rcd$")) {
-				//売上ファイルであればListに格納
+			if((files[i].isFile()) && (files[i].getName().matches("^[0-9]{8}.rcd$"))) {
+				//対象がファイルであり、「数字8桁.rcd」であればListに格納
 				rcdFiles.add(files[i]);
 			}
 		}
@@ -106,6 +113,13 @@ public class CalculateSales {
 				if(!branchNames.containsKey(itemsArray.get(0))) {
 					//支店コードが存在しない場合エラーメッセージ表示
 					System.out.println(BRANCHCODE_NOT_EXIST);
+					return;
+				}
+
+				//売上ファイルの売上金額が数字なのか確認
+				if(!itemsArray.get(1).matches("^[0-9]*$")) {
+					//売上金額が数字出なかった場合にはエラーメッセージ表示
+					System.out.println(UNKNOWN_ERROR);
 					return;
 				}
 
