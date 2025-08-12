@@ -41,9 +41,9 @@ public class CalculateSales {
 	private static final String FILE_INVALID_FORMAT = "定義ファイルのフォーマットが不正です";
 	private static final String FILENAME_NOT_CONSECUTIVE = "売上ファイル名が連番になっていません";
 	private static final String ARITHMETIC_OVERFLOW = "合計⾦額が10桁を超えました";
-	private static final String BRANCHCODE_NOT_EXIST = "該当ファイル名(00000001.rcdなど)の支店コードが不正です";
-	private static final String COMMODITYCODE_NOT_EXIST = "該当ファイル名(00000001.rcdなど)の商品コードが不正です";
-	private static final String SALESFILE_INVALID_FORMAT = "該当ファイル名(00000001.rcdなど)のフォーマットが不正です";
+	private static final String BRANCHCODE_NOT_EXIST = "の支店コードが不正です";
+	private static final String COMMODITYCODE_NOT_EXIST = "の商品コードが不正です";
+	private static final String SALESFILE_INVALID_FORMAT = "のフォーマットが不正です";
 
 	/**
 	 * メインメソッド
@@ -57,10 +57,10 @@ public class CalculateSales {
 		Map<String, Long> branchSales = new HashMap<>();
 
 		//商品コードと商品名を保持するMap
-		Map<String, String>commodityNames = new HashMap<>();
+		Map<String, String> commodityNames = new HashMap<>();
 
 		//商品コードと売上金額を保持するMap
-		Map<String, Long>commoditySales = new HashMap<>();
+		Map<String, Long> commoditySales = new HashMap<>();
 
 		//コマンドライン引数が渡されているか確認
 		if(args.length != 1) {
@@ -116,9 +116,10 @@ public class CalculateSales {
 		for(int i = 0; i < rcdFiles.size(); i++) {
 			//売上ファイルの読み込み
 			BufferedReader br = null;
+			String rcdFileName = rcdFiles.get(i).getName();
 
 			try {
-				File file = new File(args[0], rcdFiles.get(i).getName());
+				File file = new File(args[0], rcdFileName);
 				FileReader fr = new FileReader(file);
 				br = new BufferedReader(fr);
 
@@ -132,21 +133,21 @@ public class CalculateSales {
 				//売上ファイルの中身が3行かどうか
 				if(itemsArray.size() != 3 ) {
 					//売上ファイルが3行でなかったらエラーメッセージ表示
-					System.out.println(SALESFILE_INVALID_FORMAT);
+					System.out.println(rcdFileName + SALESFILE_INVALID_FORMAT);
 					return;
 				}
 
 				//売上ファイルの支店コードが支店定義ファイルに存在するか確認
 				if(!branchNames.containsKey(itemsArray.get(0))) {
 					//支店コードが存在しない場合エラーメッセージ表示
-					System.out.println(BRANCHCODE_NOT_EXIST);
+					System.out.println(rcdFileName + BRANCHCODE_NOT_EXIST);
 					return;
 				}
 
 				//売上ファイルの商品コードが商品定義ファイルに存在するか確認
 				if(!commodityNames.containsKey(itemsArray.get(1))) {
 					//商品コードが存在しない場合エラーメッセージ表示
-					System.out.println(COMMODITYCODE_NOT_EXIST);
+					System.out.println(rcdFileName + COMMODITYCODE_NOT_EXIST);
 					return;
 				}
 
@@ -260,11 +261,11 @@ public class CalculateSales {
 					return false;
 				}
 
-					//(支店or商品)コードと(支店or商品)名を保持
-					names.put(items[0], items[1]);
+				//(支店or商品)コードと(支店or商品)名を保持
+				names.put(items[0], items[1]);
 
-					//(支店or商品)コードと売上初期値を保持
-					sales.put(items[0], 0L);
+				//(支店or商品)コードと売上初期値を保持
+				sales.put(items[0], 0L);
 
 				System.out.println(line);
 			}
